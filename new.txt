@@ -1,0 +1,44 @@
+cpu/ralink_soc/start.S:2198:        li t5, RALINK_PIO_BASE + 0x24
+cpu/ralink_soc/start.S:2208:        li t5, RALINK_PIO_BASE + 0x2C
+cpu/ralink_soc/start.S:2221:        li t5, RALINK_PIO_BASE + 0x54
+cpu/ralink_soc/start.S:2255:	li t5, RALINK_PIO_BASE + 0x24
+cpu/ralink_soc/start.S:2261:	li t5, RALINK_PIO_BASE + 0x30
+cpu/ralink_soc/start.S:2268:	li t5, RALINK_PIO_BASE + 0x24
+cpu/ralink_soc/start.S:2274:	li t5, RALINK_PIO_BASE + 0x30
+cpu/ralink_soc/start.S:2281:	li t5, RALINK_PIO_BASE + 0x24
+cpu/ralink_soc/start.S:2287:	li t5, RALINK_PIO_BASE + 0x30
+cpu/ralink_soc/start_1004k.S:239:	la		r5_temp_addr, RALINK_PIO_BASE
+cpu/ralink_soc/start_1004k.S:276:	la		r5_temp_addr, RALINK_PIO_BASE
+drivers/nand_flash.c:288:	ra_outl(RALINK_PIO_BASE+0x24, ra_inl(RALINK_PIO_BASE+0x24) & ~0x01);
+drivers/rt2880_eth.c:503:#define PIODIR_R  (RALINK_PIO_BASE + 0X24)
+drivers/rt2880_eth.c:504:#define PIODATA_R (RALINK_PIO_BASE + 0X20)
+drivers/rt2880_eth.c:505:#define PIODIR3924_R  (RALINK_PIO_BASE + 0x4c)
+drivers/rt2880_eth.c:506:#define PIODATA3924_R (RALINK_PIO_BASE + 0x48)
+drivers/rt2880_eth.c:1750:	ra_or(RALINK_PIO_BASE, 1<<(ether_gpio<<1));
+drivers/rt2880_eth.c:1751:	ra_or(RALINK_PIO_BASE+0x14, 1<<ether_gpio);
+drivers/rt2880_eth.c:1753:	ra_and(RALINK_PIO_BASE+0x4, ~(1<<ether_gpio));
+drivers/rt2880_eth.c:1756:	ra_or(RALINK_PIO_BASE+0x4, 1<<ether_gpio);
+drivers/spi_flash.c:101:	//data = ra_inl(RALINK_PIO_BASE+0x20);
+drivers/spi_flash.c:102:	//dir = ra_inl(RALINK_PIO_BASE+0x24);
+drivers/spi_flash.c:103:	//pol = ra_inl(RALINK_PIO_BASE+0x28);
+drivers/spi_flash.c:105:	ra_outl(RALINK_PIO_BASE+0x20, 0);
+drivers/spi_flash.c:110:	ra_outl(RALINK_PIO_BASE+0x20, 1);
+include/rt_mmap.h:44:#define RALINK_PIO_BASE			0xA0300600
+include/rt_mmap.h:60:#define RALINK_PIO_BASE			0xA0300600
+include/rt_mmap.h:103:#define RALINK_PIO_BASE			0xB0000600
+include/rt_mmap.h:160:#define RALINK_PIO_BASE			0xB0000600
+include/rt_mmap.h:223:#define RALINK_PIO_BASE			0xB0000600
+include/rt_mmap.h:286:#define RALINK_PIO_BASE                 0xB0000600
+include/rt_mmap.h:366:#define RALINK_PIO_BASE                 0xB0000600
+include/rt_mmap.h:448:#define RALINK_PIO_BASE                 0xBE000600
+include/rt_mmap.h:530:#define RALINK_PIO_BASE			0xB0000600
+include/rt_mmap.h:586:#define RALINK_PIO_BASE			0xB0000600
+include/rt_mmap.h:655:#define RALINK_PIO_BASE			0xB0000600
+include/rt_mmap.h:716:#define RALINK_PIO_BASE			0xBFBF0200
+include/rt_mmap.h:832:#define RALINK_PIO_BASE			0xBE000600
+stage1/start.S:666:        li t5, RALINK_PIO_BASE + 0x24
+stage1/start.S:671:        li t5, RALINK_PIO_BASE + 0x2C
+stage1/start.S:678:	li t5, RALINK_PIO_BASE + 0x24
+stage1/start.S:684:	li t5, RALINK_PIO_BASE + 0x30
+stage1/start.S:691:	li t5, RALINK_PIO_BASE + 0x24
+stage1/start.S:697:	li t5, RALINK_PIO_BASE + 0x30

@@ -92,7 +92,7 @@ extern unsigned int  CFG_BLOCKSIZE;
 
 #define SERIAL_CLOCK_DIVISOR 16
 
-#define CONFIG_BOOTDELAY	5	/* autoboot after 5 seconds	*/
+#define CONFIG_BOOTDELAY	3	/* autoboot after 5 seconds	*/
 
 #define CONFIG_BAUDRATE		57600
 
@@ -492,6 +492,98 @@ extern unsigned int  CFG_BLOCKSIZE;
 #endif /* RALINK_USB */
 
 #if defined (MT7621_ASIC_BOARD) || defined (MT7621_FPGA_BOARD)
+/*
+ *
+ *  * Web Failsafe configuration
+ *
+ *   */
+#define CONFIG_NET_MULTI
+#define CONFIG_NET_VLAN
+#define milisecdelay(_x)			udelay((_x) * 1000)
+#define milisecdelay(_x)			udelay((_x) * 1000)
+
+
+
+
+#define WEBFAILSAFE_UPLOAD_UBOOT_ADDRESS   0x0
+
+#define WEBFAILSAFE_UPLOAD_KERNEL_ADDRESS   0x50000
+
+
+//从内存中加载的地址这个地址是正确的
+#if defined (RT2880_ASIC_BOARD) || defined (RT2880_FPGA_BOARD)
+	#define WEBFAILSAFE_UPLOAD_RAM_ADDRESS	  0x8a100000
+#else
+	#define WEBFAILSAFE_UPLOAD_RAM_ADDRESS   0x80100000
+#endif
+
+
+
+// U-Boot partition size
+
+#define WEBFAILSAFE_UPLOAD_UBOOT_SIZE_IN_BYTES  (64 * 1024)
+
+#define UPDATE_SCRIPT_UBOOT_SIZE_IN_BYTES        "0x10000"
+
+
+
+// ART partition size
+
+#define WEBFAILSAFE_UPLOAD_ART_SIZE_IN_BYTES       (64 * 1024)
+#define WEBFAILSAFE_UPLOAD_ART_ADDRESS       WEBFAILSAFE_UPLOAD_KERNEL_ADDRESS+0x600000
+
+
+// max. firmware size <= (FLASH_SIZE -  WEBFAILSAFE_UPLOAD_LIMITED_AREA_IN_BYTES)
+
+// TP-Link: 64k(U-Boot),64k(MAC/model/WPS pin block),64k(ART)
+
+#define WEBFAILSAFE_UPLOAD_LIMITED_AREA_IN_BYTES     (192 * 1024)
+
+
+
+// progress state info
+
+#define WEBFAILSAFE_PROGRESS_START         0
+
+#define WEBFAILSAFE_PROGRESS_TIMEOUT         1
+
+#define WEBFAILSAFE_PROGRESS_UPLOAD_READY	2
+
+#define WEBFAILSAFE_PROGRESS_UPGRADE_READY	3
+
+#define WEBFAILSAFE_PROGRESS_UPGRADE_FAILED	4
+
+
+
+// update type
+
+#define WEBFAILSAFE_UPGRADE_TYPE_FIRMWARE     0
+
+#define WEBFAILSAFE_UPGRADE_TYPE_UBOOT  1
+
+#define WEBFAILSAFE_UPGRADE_TYPE_ART    2
+
+
+
+// progress state info
+#define WEBFAILSAFE_PROGRESS_START				0
+#define WEBFAILSAFE_PROGRESS_TIMEOUT			1
+#define WEBFAILSAFE_PROGRESS_UPLOAD_READY		2
+#define WEBFAILSAFE_PROGRESS_UPGRADE_READY		3
+#define WEBFAILSAFE_PROGRESS_UPGRADE_FAILED		4
+
+// update type
+#define WEBFAILSAFE_UPGRADE_TYPE_FIRMWARE		0
+#define WEBFAILSAFE_UPGRADE_TYPE_UBOOT			1
+#define WEBFAILSAFE_UPGRADE_TYPE_ART			2
+
+
+/*-----------------------------------------------------------------------*/
+
+
+
+
+
 //#define USE_PIO_DBG		1
 #endif
 

@@ -2228,7 +2228,7 @@ void setup_internal_gsw(void)
 	mii_mgr_write(31, 0x3600, 0x8000);//force MAC link down before reset
 
 	mii_mgr_write(31, 0x7000, 0x3);//reset MT7530
-	printf("#Reset_MT7530\n");
+	//printf("#Reset_MT7530\n");
 	udelay(5);
 	
 
@@ -2383,7 +2383,7 @@ static int rt2880_eth_setup(struct eth_device* dev)
 	u16	wTmp;
 	uchar	*temp;
 
-	printf("\n Waitting for RX_DMA_BUSY status Start... ");
+	printf("Waitting for RX_DMA_BUSY status Start...\n");
 	while(1)
 		if(!isDMABusy(dev))
 			break;

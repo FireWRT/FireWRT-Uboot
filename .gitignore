@@ -1,0 +1,13 @@
+*.o
+*.a
+u-boot*
+.depend
+.config
+.menuconfig.log
+.tmp_config
+System.map
+autoconf.h
+tools/mkimage
+.config.old
+*~
+tags

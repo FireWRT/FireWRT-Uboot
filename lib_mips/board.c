@@ -32,8 +32,9 @@
 #include <rt_mmap.h>
 #include <spi_api.h>
 #include <nand_api.h>
-
+#include <led.h>
 DECLARE_GLOBAL_DATA_PTR;
+cmd_tbl_t *p_gmdtp;//用于httpd.c中固件更新完后重启内核
 #undef DEBUG
 
 #define SDRAM_CFG1_REG RALINK_SYSCTL_BASE + 0x0304
@@ -95,6 +96,7 @@ extern ulong uboot_end;
 extern int usb_stor_curr_dev;
 #endif
 
+volatile int webfailsafe_upgrade_type;
 ulong monitor_flash_len;
 
 const char version_string[] =
@@ -595,7 +597,35 @@ init_fnc_t *init_sequence[] = {
 };
 #endif
 
-//  
+//
+void printFireWRT(void)
+{
+    printf("\n\n");
+    printf(" .-------.\n");
+    printf(" |  _____/             ________        __\n");
+    printf(" |  __/__ .----..----.|  |  |  |.----.|  |_\n");
+    printf(" |  | |  ||   _|| -__||  |  |  ||   _||   _|\n");
+    printf(" |_ | |__||__|  |____||________||__|  |____|\n");
+    printf("---------------------------------------------\n");
+    printf("                FIREFLY Team\n");
+    printf("        Full of enthusiasm and dream\n");
+    printf("         <fl.service@t-firely.com>\n");
+    printf("---------------------------------------------");
+}
+void printFireLink(void)
+{
+    printf("\n\n");
+    printf(" .-------.             __                __\n");
+    printf(" |  _____/            |  |              |  | __ \n");
+    printf(" |  __/__ .----..----.|  |    __ .-----.|  |/  /\n");
+    printf(" |  | |  ||   _|| -__||  |__ |  ||     ||     <\n");
+    printf(" |__| |__||__|  |____||_____||__||__|__||__|\\__\\\n");
+    printf("--------------------------------------------------\n");
+    printf("                  FIREFLY Team\n");
+    printf("          Full of enthusiasm and dream\n");
+    printf("           <fl.service@t-firely.com>\n");
+    printf("--------------------------------------------------\n");
+}
 void board_init_f(ulong bootflag)
 {
 	gd_t gd_data, *id;
@@ -605,7 +635,6 @@ void board_init_f(ulong bootflag)
 	ulong *s;
 	u32 value;
 	u32 fdiv = 0, step = 0, frac = 0, i;
-
 #if defined RT6855_FPGA_BOARD || defined RT6855_ASIC_BOARD || \
     defined MT7620_FPGA_BOARD || defined MT7620_ASIC_BOARD
 	value = le32_to_cpu(*(volatile u_long *)(RALINK_SPI_BASE + 0x10));
@@ -871,6 +900,7 @@ void board_init_f(ulong bootflag)
 #define SEL_LOAD_LINUX_WRITE_FLASH      2
 #define SEL_BOOT_FLASH                  3
 #define SEL_ENTER_CLI                   4
+#define SEL_LOAD_LINUX_WRITE_FLASH_Httpd 5
 #define SEL_LOAD_BOOT_WRITE_FLASH_BY_SERIAL 7
 #define SEL_LOAD_BOOT_SDRAM             8
 #define SEL_LOAD_BOOT_WRITE_FLASH       9
@@ -885,6 +915,7 @@ void OperationSelect(void)
 #ifdef RALINK_CMDLINE
 	printf("   %d: Entr boot command line interface.\n", SEL_ENTER_CLI);
 #endif // RALINK_CMDLINE //
+	printf("   %d: Load system code then write to Flash via Httpd.\n",SEL_LOAD_LINUX_WRITE_FLASH_Httpd);//5 从httpd烧写固件
 #ifdef RALINK_UPGRADE_BY_SERIAL
 	printf("   %d: Load Boot Loader code then write to Flash via Serial. \n", SEL_LOAD_BOOT_WRITE_FLASH_BY_SERIAL);
 #endif // RALINK_UPGRADE_BY_SERIAL //
@@ -984,7 +1015,7 @@ int tftp_config(int type, char *argv[])
 	setenv("bootfile", file);
 	if (strcmp(default_file, file) != 0)
 		modifies++;
-
+    saveenv();
 	return 0;
 }
 
@@ -1895,7 +1926,7 @@ void board_init_r (gd_t *id, ulong dest_addr)
 
 #endif
 
-	debug("\n ##### The CPU freq = %d MHZ #### \n",mips_cpu_feq/1000/1000);
+	//debug("\n ##### The CPU freq = %d MHZ #### \n",mips_cpu_feq/1000/1000);
 
 /*
 	if(*(volatile u_long *)(RALINK_SYSCTL_BASE + 0x0304) & (1<< 24))
@@ -1907,7 +1938,7 @@ void board_init_r (gd_t *id, ulong dest_addr)
 		debug("\nSDRAM bus set to 16 bit \n");
 	}
 */
-	debug(" estimate memory size =%d Mbytes\n",gd->ram_size /1024/1024 );
+	//debug(" estimate memory size =%d Mbytes\n",gd->ram_size /1024/1024 );
 
 #if defined (RT3052_ASIC_BOARD) || defined (RT3052_FPGA_BOARD)  || \
     defined (RT3352_ASIC_BOARD) || defined (RT3352_FPGA_BOARD)  || \
@@ -1946,12 +1977,24 @@ void board_init_r (gd_t *id, ulong dest_addr)
 	    s = getenv ("bootdelay");
 	    timer1 = s ? (int)simple_strtol(s, NULL, 10) : CONFIG_BOOTDELAY;
 	}
+    init_power_led();
+    init_wps();
+    control_power_led(0);
+    
+    printFireLink();
+	OperationSelect();
 
-	OperationSelect();   
 	while (timer1 > 0) {
 		--timer1;
 		/* delay 100 * 10ms */
 		for (i=0; i<100; ++i) {
+            if(readwps() == 0){
+                BootType = '5';
+                control_power_led(1);
+                break;
+            }
+
+
 			if ((my_tmp = tstc()) != 0) {	/* we got a key press	*/
 				timer1 = 0;	/* no more delay	*/
 				BootType = getc();
@@ -1965,6 +2008,8 @@ void board_init_r (gd_t *id, ulong dest_addr)
 		printf ("\b\b\b%2d ", timer1);
 	}
 	putc ('\n');
+	p_gmdtp = cmdtp;//记录下命令参数
+
 	if(BootType == '3') {
 		char *argv[2];
 		sprintf(addr_str, "0x%X", CFG_KERN_ADDR);
@@ -2082,6 +2127,11 @@ void board_init_r (gd_t *id, ulong dest_addr)
 				main_loop ();
 			}
 			break;
+		case '5'://！从httpd更新固件
+            control_power_led(1);
+			NetLoopHttpd();
+			break;
+		
 #endif // RALINK_CMDLINE //
 #ifdef RALINK_UPGRADE_BY_SERIAL
 		case '7':

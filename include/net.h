@@ -335,7 +335,46 @@ extern int		NetState;		/* Network loop state		*/
 extern int		NetRestartWrap;		/* Tried all network devices	*/
 #endif
 
-typedef enum { BOOTP, RARP, ARP, TFTP, DHCP, PING, DNS, NFS, CDP, NETCONS } proto_t;
+typedef enum { BOOTP, RARP, ARP, TFTP, DHCP, PING, DNS, NFS, CDP, NETCONS, SNTP } proto_t;
+
+/* Set active state */
+static inline __attribute__((always_inline)) int eth_init_state_only(bd_t *bis){
+	eth_get_dev()->state = ETH_STATE_ACTIVE;
+	return 0;
+}
+
+
+/* Set passive state */
+static inline __attribute__((always_inline)) void eth_halt_state_only(void){
+	eth_get_dev()->state = ETH_STATE_PASSIVE;
+}
+
+static inline void eth_set_last_protocol(int protocol){
+#ifdef CONFIG_NETCONSOLE
+	extern proto_t net_loop_last_protocol;
+	net_loop_last_protocol = protocol;
+#endif
+}
+
+static inline __attribute__((always_inline)) int eth_is_on_demand_init(void){
+#ifdef CONFIG_NETCONSOLE
+	extern proto_t net_loop_last_protocol;
+	return net_loop_last_protocol != NETCONS;
+#else
+	return 1;
+#endif
+}
+
+
+
+
+
+
+
+
+
+
+
 
 /* from net/net.c */
 extern char	BootFile[128];			/* Boot File name		*/
@@ -350,8 +389,15 @@ extern ushort CDPNativeVLAN;
 extern ushort CDPApplianceVLAN;
 #endif
 
+#if (CONFIG_COMMANDS & CFG_CMD_SNTP)
+extern IPaddr_t	NetNtpServerIP;			/* the ip address to NTP 	*/
+extern int NetTimeOffset;			/* offset time from UTC		*/
+#endif
+
 /* Initialize the network adapter */
 extern int	NetLoop(proto_t);
+extern int	NetLoopHttpd(void);
+extern void	NetSendHttpd(void);
 
 /* Shutdown adapters and cleanup */
 extern void	NetStop(void);

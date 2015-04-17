@@ -191,6 +191,8 @@ LIBS += cpu/$(CPU)/$(SOC)/lib$(SOC).a
 endif
 LIBS += lib_$(ARCH)/lib$(ARCH).a
 LIBS += net/libnet.a
+LIBS += httpd/libhttpd.a
+LIBS += peripheral/libperipheral.a
 
 #LIBS += rtc/librtc.a
 LIBS += drivers/libdrivers.a

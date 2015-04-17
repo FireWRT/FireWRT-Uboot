@@ -335,7 +335,7 @@ int eth_init(bd_t *bis)
 
 		if (eth_current->init(eth_current, bis)) {
 			eth_current->state = ETH_STATE_ACTIVE;
-			printf("\n ETH_STATE_ACTIVE!! \n");
+			//printf("\n ETH_STATE_ACTIVE!! \n");
 			return 1;
 		}
 		printf  ("FAIL\n");
