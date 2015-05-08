@@ -3,6 +3,9 @@
 #include <rt_mmap.h>
 #include <configs/rt2880.h>
 #include <malloc.h>
+#ifdef OLED_1_3
+#include <oled.h>
+#endif
 #include "bbu_spiflash.h"
 
 
@@ -1008,6 +1011,10 @@ unsigned long raspi_init(void)
 
 int raspi_erase(unsigned int offs, int len)
 {
+#ifdef OLED_1_3
+    unsigned char update_erase[16];
+    unsigned int length = len;
+#endif
 	ra_dbg("%s: offs:%x len:%x\n", __func__, offs, len);
 
 	/* sanity checks */
@@ -1022,7 +1029,12 @@ int raspi_erase(unsigned int offs, int len)
 
 		offs += spi_chip_info->sector_size;
 		len -= spi_chip_info->sector_size;
-		printf(".");
+#ifdef OLED_1_3
+        OLED_Clear_page(4);
+        sprintf(update_erase,"Erase Flash:%d\%",(length-len)*100/length);
+        OLED_ShowString(0,4,update_erase);
+#endif
+        printf(".");
 	}
 	printf("\n");
 
@@ -1149,6 +1161,11 @@ int raspi_read(char *buf, unsigned int from, int len)
 
 int raspi_write(char *buf, unsigned int to, int len)
 {
+#ifdef OLED_1_3
+    unsigned char update_write[16];
+    unsigned int to_length = to;
+    int length = len;
+#endif
 	u32 page_offset, page_size;
 	int rc = 0, retlen = 0;
 #ifdef USER_MODE
@@ -1284,8 +1301,16 @@ int raspi_write(char *buf, unsigned int to, int len)
 #endif
 
 		//printf("%s:: to:%x page_size:%x ret:%x\n", __func__, to, page_size, rc);
-		if ((retlen & 0xffff) == 0)
+		if ((retlen & 0xffff) == 0){
 			printf(".");
+#ifdef OLED_1_3
+            OLED_Clear_page(6);
+            sprintf(update_write,"Write Flash:%d\%",(length-len)*100/length);
+            OLED_ShowString(0,6,update_write);
+#endif
+        
+        
+        }
 
 		if (rc > 0) {
 			retlen += rc;
@@ -1299,7 +1324,13 @@ int raspi_write(char *buf, unsigned int to, int len)
 		len -= page_size;
 		to += page_size;
 		buf += page_size;
-	}
+    }
+#ifdef OLED_1_3
+    OLED_Clear_page(6);
+    sprintf(update_write,"Frite Flash:%d\%",100);
+     OLED_ShowString(0,6,update_write);
+#endif
+
 	raspi_wait_ready(100);
 	printf("\n");
 	if (spi_chip_info->addr4b)
@@ -1435,6 +1466,13 @@ int raspi_erase_write(char *buf, unsigned int offs, int count)
 			count -= aligned_size;
 		}
 	}
+#ifdef OLED_1_3
+    OLED_Clear_page(2);
+    OLED_Clear_page(4);
+    OLED_Clear_page(6);
+    OLED_ShowString(0,2,"UPDATE FIREWARE");
+    OLED_ShowString(0,4,"    SUCCESS");
+#endif
 	printf("Done!\n");
 	return 0;
 }

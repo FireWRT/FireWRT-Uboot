@@ -3,7 +3,9 @@
 #include "fs.h"
 #include "fsdata.h"
 #include <linux/string.h>
-
+#ifdef OLED_1_3
+#include <oled.h>
+#endif
 #define STATE_NONE				0		// empty state (waiting for request...)
 #define STATE_FILE_REQUEST		1		// remote host sent GET request
 #define STATE_UPLOAD_REQUEST	2		// remote host sent POST request
@@ -69,8 +71,16 @@ static int atoi(const char *s){
 
 // print downloading progress
 static void httpd_download_progress(void){
+#ifdef OLED_1_3
+    unsigned char oled_update[16];
+#endif
 	if(post_packet_counter == 150){
-    	puts("#");
+#ifdef OLED_1_3
+        OLED_Clear_page(6);
+        sprintf(oled_update,"DownLoad:%d\%",hs->upload*100/hs->upload_total);
+        OLED_ShowString(0,6,oled_update);
+#endif
+        puts("#");
 		post_packet_counter = 0;
 	}
 
@@ -191,7 +201,6 @@ static int httpd_findandstore_firstchunk(void){
 				hs->upload_total = hs->upload_total - (int)(end - start) - strlen(boundary_value) - 6;
 
 				printf("Upload file size: %d bytes\n", hs->upload_total);
-
 				// We need to check if file which we are going to download
 				// has correct size (for every type of upgrade)
 
@@ -244,7 +253,6 @@ static int httpd_findandstore_firstchunk(void){
 void httpd_appcall(void){
 	struct fs_file fsfile;
 	unsigned int i;
-
 	switch(uip_conn->lport){
 
 		case HTONS(80):

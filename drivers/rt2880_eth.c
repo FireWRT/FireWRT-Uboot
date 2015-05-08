@@ -747,10 +747,216 @@ void IsSwitchVlanTableBusy(void)
 	if (j == 20)
 	    printf("set vlan timeout value=0x%x.\n", value);
 }
-
 #endif
 
+void ALL_LANPartition(void)
+{
+#ifdef MAC_TO_100SW_MODE
+	int sw_id = 0;
+	mii_mgr_read(29, 31, &sw_id);
+#ifdef RALINK_DEMO_BOARD_PVLAN
+	if (sw_id == 0x175c) {
+		//disable tagged VLAN
+		mii_mgr_write(29, 23, 0);
 
+		//WLLLL, wan at P0, demo board
+		mii_mgr_write(29, 19, 0x809c);
+		mii_mgr_write(29, 20, 0x9a96);
+		mii_mgr_write(29, 21, 0x8e00);
+		mii_mgr_write(29, 22, 0x8420);
+	}
+	else {
+		mii_mgr_write(20, 13, 0x21);
+		mii_mgr_write(22, 14, 0x2002);
+		mii_mgr_write(22, 15, 0x1001);
+		mii_mgr_write(22, 16, 0x1001);
+		mii_mgr_write(22, 17, 0x1001);
+		mii_mgr_write(22, 18, 0x1001);
+		mii_mgr_write(22, 19, 0x1001);
+		mii_mgr_write(23, 0, 0x3e21);
+		mii_mgr_write(23, 1, 0x3e3e);
+		mii_mgr_write(23, 2, 0x3e3e);
+		mii_mgr_write(23, 16, 0x3f3f);
+		mii_mgr_write(23, 17, 0x3f3f);
+		mii_mgr_write(23, 18, 0x3f3f);
+	}
+#endif
+#ifdef RALINK_EV_BOARD_PVLAN
+	if (sw_id == 0x175c) {
+		//disable tagged VLAN
+		mii_mgr_write(29, 23, 0);
+
+		//LLLLW, wan at P4, ev board
+		mii_mgr_write(29, 19, 0x8e8d);
+		mii_mgr_write(29, 20, 0x8b87);
+		mii_mgr_write(29, 21, 0x8000);
+		mii_mgr_write(29, 22, 0x8420);
+	}
+	else {
+		mii_mgr_write(20, 13, 0x21);
+		mii_mgr_write(22, 14, 0x1001);
+		mii_mgr_write(22, 15, 0x1001);
+		mii_mgr_write(22, 16, 0x1001);
+		mii_mgr_write(22, 17, 0x1001);
+		mii_mgr_write(22, 18, 0x2002);
+		mii_mgr_write(22, 19, 0x1001);
+		mii_mgr_write(23, 0, 0x2f2f);
+		mii_mgr_write(23, 1, 0x2f2f);
+		mii_mgr_write(23, 2, 0x2f30);
+		mii_mgr_write(23, 16, 0x3f3f);
+		mii_mgr_write(23, 17, 0x3f3f);
+		mii_mgr_write(23, 18, 0x3f3f);
+	}
+#endif
+#endif // MAC_TO_100SW_MODE //
+
+#if defined (RT3052_ASIC_BOARD) || defined (RT3052_FPGA_BOARD) || \
+    defined (RT3352_ASIC_BOARD) || defined (RT3352_FPGA_BOARD) || \
+    defined (RT5350_ASIC_BOARD) || defined (RT5350_FPGA_BOARD) || \
+    defined (MT7628_ASIC_BOARD) || defined (MT7628_FPGA_BOARD)
+#ifdef RALINK_DEMO_BOARD_PVLAN
+	//WLLLL, wan at P0, demo board
+	*((volatile u32 *)(RALINK_ETH_SW_BASE + 0x40)) = 0x1002; //PVID
+	*((volatile u32 *)(RALINK_ETH_SW_BASE + 0x44)) = 0x1001; //PVID
+	*((volatile u32 *)(RALINK_ETH_SW_BASE + 0x48)) = 0x1001; //PVID
+	*((volatile u32 *)(RALINK_ETH_SW_BASE + 0x70)) = 0xffff417e; //VLAN member
+#endif
+#ifdef RALINK_EV_BOARD_PVLAN
+	//LLLLW, wan at P4, ev board
+	*((volatile u32 *)(RALINK_ETH_SW_BASE + 0x40)) = 0x1001; //PVID
+	*((volatile u32 *)(RALINK_ETH_SW_BASE + 0x44)) = 0x1001; //PVID
+	*((volatile u32 *)(RALINK_ETH_SW_BASE + 0x48)) = 0x1002; //PVID
+	*((volatile u32 *)(RALINK_ETH_SW_BASE + 0x70)) = 0xffff506f; //VLAN member
+#endif
+#endif // (RT3052_ASIC_BOARD || RT3052_FPGA_BOARD || RT3352_ASIC_BOARD || RT3352_FPGA_BOARD)
+
+#if defined (RT6855A_ASIC_BOARD) || (RT6855A_FPGA_BOARD) ||\
+    (defined (MT7620_ASIC_BOARD) && !defined(P5_RGMII_TO_MAC_MODE)) || defined (MT7620_FPGA_BOARD)
+
+#ifdef RALINK_DEMO_BOARD_PVLAN
+	//WLLLL, wan at P0, demo board
+	//LAN/WAN ports as security mode
+	RALINK_REG(RALINK_ETH_SW_BASE+0x2004) = 0xff0003; //port0
+	RALINK_REG(RALINK_ETH_SW_BASE+0x2104) = 0xff0003; //port1
+	RALINK_REG(RALINK_ETH_SW_BASE+0x2204) = 0xff0003; //port2
+	RALINK_REG(RALINK_ETH_SW_BASE+0x2304) = 0xff0003; //port3
+	RALINK_REG(RALINK_ETH_SW_BASE+0x2404) = 0xff0003; //port4
+	RALINK_REG(RALINK_ETH_SW_BASE+0x2504) = 0xff0003; //port5
+
+	//set PVID
+	RALINK_REG(RALINK_ETH_SW_BASE+0x2014) = 0x10002; //port0
+	RALINK_REG(RALINK_ETH_SW_BASE+0x2114) = 0x10001; //port1
+	RALINK_REG(RALINK_ETH_SW_BASE+0x2214) = 0x10001; //port2
+	RALINK_REG(RALINK_ETH_SW_BASE+0x2314) = 0x10001; //port3
+	RALINK_REG(RALINK_ETH_SW_BASE+0x2414) = 0x10001; //port4
+	RALINK_REG(RALINK_ETH_SW_BASE+0x2514) = 0x10001; //port5
+
+	//VLAN member
+	RALINK_REG(RALINK_ETH_SW_BASE+0x94) = 0x40fe0001; //VAWD1
+	RALINK_REG(RALINK_ETH_SW_BASE+0x90) = 0x80001000; //VTCR
+	IsSwitchVlanTableBusy();
+
+	RALINK_REG(RALINK_ETH_SW_BASE+0x94) = 0x40c10001; //VAWD1
+	RALINK_REG(RALINK_ETH_SW_BASE+0x90) = 0x80001001; //VTCR
+	IsSwitchVlanTableBusy();
+#endif
+#ifdef RALINK_EV_BOARD_PVLAN
+	//LLLLW, wan at P4, ev board
+	//LAN/WAN ports as security mode
+	RALINK_REG(RALINK_ETH_SW_BASE+0x2004) = 0xff0003; //port0
+	RALINK_REG(RALINK_ETH_SW_BASE+0x2104) = 0xff0003; //port1
+	RALINK_REG(RALINK_ETH_SW_BASE+0x2204) = 0xff0003; //port2
+	RALINK_REG(RALINK_ETH_SW_BASE+0x2304) = 0xff0003; //port3
+	RALINK_REG(RALINK_ETH_SW_BASE+0x2404) = 0xff0003; //port4
+	RALINK_REG(RALINK_ETH_SW_BASE+0x2504) = 0xff0003; //port5
+
+	//set PVID
+	RALINK_REG(RALINK_ETH_SW_BASE+0x2014) = 0x10001; //port0
+	RALINK_REG(RALINK_ETH_SW_BASE+0x2114) = 0x10001; //port1
+	RALINK_REG(RALINK_ETH_SW_BASE+0x2214) = 0x10001; //port2
+	RALINK_REG(RALINK_ETH_SW_BASE+0x2314) = 0x10001; //port3
+	RALINK_REG(RALINK_ETH_SW_BASE+0x2414) = 0x10002; //port4
+	RALINK_REG(RALINK_ETH_SW_BASE+0x2514) = 0x10001; //port5
+
+	//VLAN member
+	RALINK_REG(RALINK_ETH_SW_BASE+0x94) = 0x40ef0001; //VAWD1
+	RALINK_REG(RALINK_ETH_SW_BASE+0x90) = 0x80001000; //VTCR
+	IsSwitchVlanTableBusy();
+	
+	RALINK_REG(RALINK_ETH_SW_BASE+0x94) = 0x40d00001; //VAWD1
+	RALINK_REG(RALINK_ETH_SW_BASE+0x90) = 0x80001001; //VTCR
+	IsSwitchVlanTableBusy();
+#endif
+
+#elif defined (MT7621_ASIC_BOARD) || defined (MT7621_FPGA_BOARD) ||\
+      (defined(MT7620_ASIC_BOARD) && defined(P5_RGMII_TO_MAC_MODE))
+/*Set  MT7530 */
+#ifdef RALINK_DEMO_BOARD_PVLAN
+	//WLLLL, wan at P0, demo board
+	//LAN/WAN ports as security mode
+	//mii_mgr_write(31, 0x2004, 0xff0003);//port0
+	//mii_mgr_write(31, 0x2104, 0xff0003);//port1
+	mii_mgr_write(31, 0x2204, 0xff0003);//port2
+	mii_mgr_write(31, 0x2304, 0xff0003);//port3
+	mii_mgr_write(31, 0x2404, 0xff0003);//port4
+	//mii_mgr_write(31, 0x2504, 0xff0003);//port5
+	//mii_mgr_write(31, 0x2604, 0xff0003);//port5
+
+	//set PVID
+	//mii_mgr_write(31, 0x2014, 0x10002);//port0
+	//mii_mgr_write(31, 0x2114, 0x10001);//port1
+	mii_mgr_write(31, 0x2214, 0x10001);//port2
+	mii_mgr_write(31, 0x2314, 0x10001);//port3
+	mii_mgr_write(31, 0x2414, 0x10001);//port4
+	//mii_mgr_write(31, 0x2514, 0x10001);//port5
+	//mii_mgr_write(31, 0x2614, 0x10001);//port6
+	/*port6 */
+	//VLAN member
+	IsSwitchVlanTableBusy();
+	mii_mgr_write(31, 0x94, 0x407e0001);//VAWD1
+	mii_mgr_write(31, 0x90, 0x80001001);//VTCR, VID=1
+	IsSwitchVlanTableBusy();
+
+	mii_mgr_write(31, 0x94, 0x40610001);//VAWD1
+	mii_mgr_write(31, 0x90, 0x80001002);//VTCR, VID=2
+	IsSwitchVlanTableBusy();
+#endif
+#ifdef RALINK_EV_BOARD_PVLAN
+	printf("set LAN/WAN LLLLW\n");
+	//LLLLW, wan at P4, ev board
+	//LAN/WAN ports as security mode
+	mii_mgr_write(31, 0x2004, 0xff0003);//port0
+	mii_mgr_write(31, 0x2104, 0xff0003);//port1
+	mii_mgr_write(31, 0x2204, 0xff0003);//port2
+	mii_mgr_write(31, 0x2304, 0xff0003);//port3
+	mii_mgr_write(31, 0x2404, 0xff0003);//port4
+	mii_mgr_write(31, 0x2504, 0xff0003);//port5
+	mii_mgr_write(31, 0x2604, 0xff0003);//port6
+
+	//set PVID
+	mii_mgr_write(31, 0x2014, 0x10001);//port0
+	mii_mgr_write(31, 0x2114, 0x10001);//port1
+	mii_mgr_write(31, 0x2214, 0x10001);//port2
+	mii_mgr_write(31, 0x2314, 0x10001);//port3
+	mii_mgr_write(31, 0x2414, 0x10002);//port4
+	mii_mgr_write(31, 0x2514, 0x10001);//port5
+	mii_mgr_write(31, 0x2614, 0x10001);//port6
+
+
+	//VLAN member
+	IsSwitchVlanTableBusy();
+	//mii_mgr_write(31, 0x94, 0x407e0001);//VAWD1
+	mii_mgr_write(31, 0x94, 0x404f0001);//VAWD1
+	mii_mgr_write(31, 0x90, 0x80001001);//VTCR, VID=1
+	IsSwitchVlanTableBusy();
+	
+	//mii_mgr_write(31, 0x94, 0x40610001);//VAWD1
+	mii_mgr_write(31, 0x94, 0x40500001);//VAWD1
+	mii_mgr_write(31, 0x90, 0x80001002);//VTCR, VID=2
+	IsSwitchVlanTableBusy();
+#endif
+#endif
+}
 
 void LANWANPartition(void)
 {
@@ -895,11 +1101,11 @@ void LANWANPartition(void)
       (defined(MT7620_ASIC_BOARD) && defined(P5_RGMII_TO_MAC_MODE))
 /*Set  MT7530 */
 #ifdef RALINK_DEMO_BOARD_PVLAN
-	printf("set LAN/WAN WLLLL\n");
+	printf("set LAN/WAN WLL\n");
 	//WLLLL, wan at P0, demo board
 	//LAN/WAN ports as security mode
-	mii_mgr_write(31, 0x2004, 0xff0003);//port0
-	mii_mgr_write(31, 0x2104, 0xff0003);//port1
+	//mii_mgr_write(31, 0x2004, 0xff0003);//port0
+	//mii_mgr_write(31, 0x2104, 0xff0003);//port1
 	mii_mgr_write(31, 0x2204, 0xff0003);//port2
 	mii_mgr_write(31, 0x2304, 0xff0003);//port3
 	mii_mgr_write(31, 0x2404, 0xff0003);//port4
@@ -907,11 +1113,11 @@ void LANWANPartition(void)
 	//mii_mgr_write(31, 0x2604, 0xff0003);//port5
 
 	//set PVID
-	mii_mgr_write(31, 0x2014, 0x10002);//port0
-	mii_mgr_write(31, 0x2114, 0x10001);//port1
+	//mii_mgr_write(31, 0x2014, 0x10002);//port0
+	//mii_mgr_write(31, 0x2114, 0x10001);//port1
 	mii_mgr_write(31, 0x2214, 0x10001);//port2
 	mii_mgr_write(31, 0x2314, 0x10001);//port3
-	mii_mgr_write(31, 0x2414, 0x10001);//port4
+	mii_mgr_write(31, 0x2414, 0x10002);//port4
 	//mii_mgr_write(31, 0x2514, 0x10001);//port5
 	//mii_mgr_write(31, 0x2614, 0x10001);//port6
 	/*port6 */

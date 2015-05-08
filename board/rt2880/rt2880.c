@@ -137,7 +137,9 @@ long int initdram(int board_type)
 #endif
 	 
 
-
+#if defined (ON_BOARD_4096M_DRAM_COMPONENT) 
+	size = 448 *1024*1024; 
+#else 
 	size = get_ram_size((ulong *)CFG_SDRAM_BASE, MAX_SDRAM_SIZE);
 	if (size > max_size)
 	{
@@ -145,6 +147,7 @@ long int initdram(int board_type)
 	//	printf("\n Return MAX size!! \n");
 		return max_size;
 	}
+#endif
 //	printf("\n Return Real size =%d !! \n",size);
 	return size;
 	

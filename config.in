@@ -1355,9 +1355,7 @@ define_bool RALINK_DUAL_VPE_FUN	y
 
 bool "Partition LAN/WAN" LAN_WAN_PARTITION
 if [ "$LAN_WAN_PARTITION" = "y" ]; then
- choice 'LAN/WAN Board Layout' "W/LLLL RALINK_DEMO_BOARD_PVLAN \
-		                LLLL/W RALINK_EV_BOARD_PVLAN 
-			       "
+ choice 'LAN/WAN Board Layout' "W/LL RALINK_DEMO_BOARD_PVLAN"
 fi
 
 bool "DDR ACTiming Setting" DDR_ACT_SETTING

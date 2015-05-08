@@ -233,9 +233,15 @@ int eth_initialize(bd_t *bis)
 				puts (" [PRIME]");
 			}
 
+#ifdef MT7621_ASIC_BOARD
+#define GMAC0_OFFSET    0xe000
+#define GDMA1_MAC_ADRL  0xe004
+#define GDMA1_MAC_ADRH  0xe008
+#else
 #define GMAC0_OFFSET    0x28
 #define GDMA1_MAC_ADRL  0x2C
 #define GDMA1_MAC_ADRH  0x30
+#endif
 
 			//get Ethernet mac address from flash
 #if defined (CFG_ENV_IS_IN_NAND)

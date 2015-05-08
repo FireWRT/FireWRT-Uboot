@@ -85,6 +85,9 @@
 #include <miiphy.h>
 #endif
 //!增加的头文件
+#ifdef OLED_1_3
+#include <oled.h>
+#endif
 #include "../httpd/fs.h"
 #include "../httpd/fsdata.h"
 
@@ -1833,7 +1836,10 @@ int NetLoopHttpd(void){
 	unsigned short int ip[2];
 	unsigned char ethinit_attempt = 0;
 	struct uip_eth_addr eaddr;
-    char httpd_ipaddr[22] = "168.168.100.200";
+    char httpd_ipaddr[22] = "192.168.1.1";
+#ifdef OLED_1_3
+    OLED_ShowString(0,4,httpd_ipaddr);
+#endif
     setenv("ipaddr",httpd_ipaddr);
 #ifdef CONFIG_NET_MULTI
 	NetRestarted = 0;

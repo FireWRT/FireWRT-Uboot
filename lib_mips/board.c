@@ -33,6 +33,10 @@
 #include <spi_api.h>
 #include <nand_api.h>
 #include <led.h>
+#include <wps.h>
+#ifdef OLED_1_3
+#include <oled.h>
+#endif
 DECLARE_GLOBAL_DATA_PTR;
 cmd_tbl_t *p_gmdtp;//用于httpd.c中固件更新完后重启内核
 #undef DEBUG
@@ -86,7 +90,7 @@ extern void rt3883_gsw_init(void);
 extern void rt305x_esw_init(void);
 #endif
 extern void LANWANPartition(void);
-
+extern void ALL_LANPartition(void);
 extern struct eth_device* 	rt2880_pdev;
 
 extern ulong uboot_end_data;
@@ -635,6 +639,7 @@ void board_init_f(ulong bootflag)
 	ulong *s;
 	u32 value;
 	u32 fdiv = 0, step = 0, frac = 0, i;
+
 #if defined RT6855_FPGA_BOARD || defined RT6855_ASIC_BOARD || \
     defined MT7620_FPGA_BOARD || defined MT7620_ASIC_BOARD
 	value = le32_to_cpu(*(volatile u_long *)(RALINK_SPI_BASE + 0x10));
@@ -1007,7 +1012,7 @@ int tftp_config(int type, char *argv[])
 		memcpy(file, s, strlen(s));
 		memcpy(default_file, s, strlen(s));
 	}
-	printf("(%s) ", file);
+	//printf("(%s) ", file);
 	input_value(file);
 	if (file == NULL)
 		return 1;
@@ -1318,7 +1323,58 @@ int check_image_validation(void)
  */
 
 gd_t gd_data;
- 
+
+
+#ifdef GPIO_TEST
+void gpio_test(void)
+{
+    int i = 100;
+    OLED_Init();
+    printf("GPIO TEST Starting\n");
+    for(i=0;i<100;++i){
+        OLED_CS_Clr();
+        udelay(5000);
+        OLED_CS_Set();
+    }
+    printf("GPIO TEST end\n");
+}
+#endif
+
+
+
+
+#ifdef OLED_1_3
+void oled_print(void)
+{
+    OLED_Clear();
+    OLED_ShowString(0,0,"    FireLink");
+    OLED_ShowString(0,2,"  Httpd Ready");
+}
+void oled_uboot_start()
+{
+    OLED_Init();
+    OLED_Clear();
+    OLED_ShowString(0,0,"    FireLink");
+    OLED_ShowString(0,2,"Update Fireware");
+    OLED_ShowString(0,4," Press WPS Key");
+}
+void oled_timeout(int timeout)
+{
+    unsigned char oled_timeouchar[16];
+    OLED_Clear_page(6);
+    sprintf(oled_timeouchar," Timeout:%ds",timeout);
+    OLED_ShowString(0,6,oled_timeouchar);
+}
+void oled_load_firewrt(void)
+{
+    OLED_Clear();
+    OLED_ShowString(0,0,"    FireLink");
+    OLED_ShowString(0,2,"Loading Fireware");
+}
+#endif
+
+
+
 void board_init_r (gd_t *id, ulong dest_addr)
 {
 	cmd_tbl_t *cmdtp;
@@ -1836,7 +1892,7 @@ void board_init_r (gd_t *id, ulong dest_addr)
 #elif (defined (MT7621_ASIC_BOARD) || defined (MT7621_FPGA_BOARD))
 	{
 	printf("============================================ \n");
-	printf("Ralink UBoot Version: %s\n", RALINK_LOCAL_VERSION);
+	printf("FireWRT UBoot Version: %s\n", RALINK_LOCAL_VERSION);
 	printf("-------------------------------------------- \n");
 #ifdef RALINK_DUAL_CORE_FUN	
 	printf("%s %s %s %s\n", CHIP_TYPE, RALINK_REG(RT2880_CHIP_REV_ID_REG)>>16&0x1 ? "MT7621A" : "MT7621N", "DualCore", GMAC_MODE);
@@ -1977,20 +2033,36 @@ void board_init_r (gd_t *id, ulong dest_addr)
 	    s = getenv ("bootdelay");
 	    timer1 = s ? (int)simple_strtol(s, NULL, 10) : CONFIG_BOOTDELAY;
 	}
+#ifdef GPIO_TEST
+    gpio_test();
+#endif
+
+#ifdef LED_POWER
     init_power_led();
-    init_wps();
     control_power_led(0);
+#endif
     
     printFireLink();
 	OperationSelect();
+ 
+#ifdef OLED_1_3
+    oled_uboot_start();
+#endif
 
-	while (timer1 > 0) {
+    init_wps();
+	
+    while (timer1 > 0) {
+#ifdef OLED_1_3
+        oled_timeout(timer1);
+#endif
 		--timer1;
 		/* delay 100 * 10ms */
 		for (i=0; i<100; ++i) {
             if(readwps() == 0){
                 BootType = '5';
+#ifdef LED_POWER
                 control_power_led(1);
+#endif
                 break;
             }
 
@@ -2009,8 +2081,17 @@ void board_init_r (gd_t *id, ulong dest_addr)
 	}
 	putc ('\n');
 	p_gmdtp = cmdtp;//记录下命令参数
+    
+    if((BootType == '2') || (BootType == '9'))
+        ALL_LANPartition();
 
 	if(BootType == '3') {
+#ifdef LED_POWER
+        control_power_led(1);
+#endif
+#ifdef OLED_1_3
+        oled_load_firewrt();
+#endif
 		char *argv[2];
 		sprintf(addr_str, "0x%X", CFG_KERN_ADDR);
 		argv[1] = &addr_str[0];
@@ -2038,6 +2119,9 @@ void board_init_r (gd_t *id, ulong dest_addr)
 			break;
 
 		case '2':
+#ifdef LED_POWER
+            control_power_led(1);
+#endif
 			printf("   \n%d: System Load Linux Kernel then write to Flash via TFTP. \n", SEL_LOAD_LINUX_WRITE_FLASH);
 			printf(" Warning!! Erase Linux in Flash then burn new one. Are you sure?(Y/N)\n");
 			confirm = getc();
@@ -2120,6 +2204,9 @@ void board_init_r (gd_t *id, ulong dest_addr)
 
 #ifdef RALINK_CMDLINE
 		case '4':
+#ifdef LED_POWER
+            control_power_led(1);
+#endif
 			printf("   \n%d: System Enter Boot Command Line Interface.\n", SEL_ENTER_CLI);
 			printf ("\n%s\n", version_string);
 			/* main_loop() can return to retry autoboot, if so just run it again. */
@@ -2128,7 +2215,12 @@ void board_init_r (gd_t *id, ulong dest_addr)
 			}
 			break;
 		case '5'://！从httpd更新固件
+#ifdef LED_POWER
             control_power_led(1);
+#endif
+#ifdef OLED_1_3
+            oled_print();
+#endif
 			NetLoopHttpd();
 			break;
 		
@@ -2190,6 +2282,9 @@ void board_init_r (gd_t *id, ulong dest_addr)
 			break;
 
 		case '9':
+#ifdef LED_POWER
+            control_power_led(1);
+#endif
 			printf("   \n%d: System Load Boot Loader then write to Flash via TFTP. \n", SEL_LOAD_BOOT_WRITE_FLASH);
 			printf(" Warning!! Erase Boot Loader in Flash then burn new one. Are you sure?(Y/N)\n");
 			confirm = getc();
